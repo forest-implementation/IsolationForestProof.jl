@@ -3,6 +3,9 @@ uuid = "d3d44539-9153-4032-8f2d-fe27bb2e3b99"
 authors = ["Adam Ulrich <a_ulrich@utb.cz>"]
 version = "1.0.0-DEV"
 
+[deps]
+Lazy = "50d2b5c4-7a5e-59d5-8109-a42b560f39c0"
+
 [compat]
 julia = "1.10"
 
