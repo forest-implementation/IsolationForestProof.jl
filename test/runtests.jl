@@ -18,5 +18,5 @@ using Lazy
     #pak: 2 => soucet prob nodes splnujici podminku
     # [2 => 2, 3 => 18, 4 => 70, 5 => 150, 6 => 180, 7 => 112, 8 => 28]
     
-    @test mean(interval_prob(Node(points,1, 0),35)) == 0 
+    @test mean(interval_prob(Node(points,1, 0),35)) == 1571//462;
 end

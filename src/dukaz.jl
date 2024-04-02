@@ -7,7 +7,7 @@ add(x,y) = x + y
 
 struct Node
     data
-    prob
+    prob ::Rational
     depth
 end
 
@@ -26,23 +26,22 @@ interval_prob(node::Node, point) =
 end
 
 
-depth_map(nodes, f=sum) = 
+depth_map( nodes, f= x -> getproperty.(x,:prob) |> sum) =
     @>>begin
         nodes
         groupby(x-> x.depth)
         collect
-        sort(by = x ->x[1])
-        map(pair -> pair.first => f(pair.second))
+        map(pair -> pair.first => pair.second |> f )
+        sort(by = x -> x.first)
 end
 
 
 mean(nodes) = 
     @>>begin
         nodes
-        groupby(x-> x.depth)
-        collect
-        sort(by = x ->x[1])
-        map(pair -> pair.first => sum(getfield.(pair.second, :prob)))
+        depth_map()
+        map( x-> x.first * x.second )
+        sum
 end
 
 interval_prob_rec(nodes, point) = begin
