@@ -1,7 +1,7 @@
 module dukaz
 using Lazy
 
-export Node, add, interval_prob, prob, interval_prob_rec
+export Node, add, interval_prob, prob, interval_prob_rec, depth_map, mean
 
 add(x,y) = x + y
 
@@ -22,6 +22,27 @@ interval_prob(node::Node, point) =
     range(2,length(node.data)) 
     map(x->(node.data[1:x-1],node.data[x:length(node.data)])) 
     map(tup -> interval_prob(prob(node,tup, point), point))
+    reduce(hcat)
+end
+
+
+depth_map(nodes, f=sum) = 
+    @>>begin
+        nodes
+        groupby(x-> x.depth)
+        collect
+        sort(by = x ->x[1])
+        map(pair -> pair.first => f(pair.second))
+end
+
+
+mean(nodes) = 
+    @>>begin
+        nodes
+        groupby(x-> x.depth)
+        collect
+        sort(by = x ->x[1])
+        map(pair -> pair.first => sum(getfield.(pair.second, :prob)))
 end
 
 interval_prob_rec(nodes, point) = begin

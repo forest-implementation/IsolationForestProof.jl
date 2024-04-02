@@ -104,13 +104,13 @@ multi MAIN() {
     #.say for interval-prob(\( data => (1,2,3,5), :1prob,:0depth ),4).flat;
     @point
     andthen (
-        |(interval-prob \( data => $_, :1prob,:0depth),:point([30,90])),
+        |(interval-prob \( data => $_, :1prob,:0depth),:point([25,100])),
     )
-    #andthen .classify: *.depth , :as(*.prob)
-   # andthen .nodemap: *.sum
-    #andthen .sort
-    #andthen .snitch
-    #andthen .map: { .value }\
-    #andthen .sum
+   andthen .classify: *.depth , :as(*.prob)
+   andthen .nodemap: *.sum
+    andthen .sort
+    andthen .snitch
+    andthen .map: { .key *.value }\
+    andthen .sum
     andthen .map: *.say
 }
