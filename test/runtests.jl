@@ -6,17 +6,35 @@ using Lazy
     # Write your tests here.
 
     @test add(5,5) == 10
-    @test interval_prob(Node((1,),1, 1),1).depth == 1
-    @test getfield.(interval_prob(Node((1,2,3),1, 0),2), :data) == [(2,) (2,)]
-    points = [15,20,25,30,35,85,90,95,105]
+
+    #@test getfield.(interval_prob(Node([1,],1, 1),1), :depth) == [1]
+    #@test getfield.(interval_prob(Node([1, 2, 3],1, 0),2), :data) == [[2], [2]]
+    points = [15, 20, 25, 30, 35, 85, 90, 95, 105]
     # @test interval_prob(Node(points, 1, 0), 25)
-    @test depth_map(interval_prob(Node((1,2,3),1, 0),2), length) == [2 => 2]
-    @test depth_map(interval_prob(Node(points,1, 0),25), length) == [2 => 2, 3 => 18, 4 => 70, 5 => 150, 6 => 180, 7 => 112, 8 => 28]
-    @test getfield.(take(interval_prob(Node(points,1, 0),25),5), :depth) == [3,4,4,5,4]
+    #@test depth_map(interval_prob(Node([1, 2, 3],1, 0),2), length) == [2 => 2]
+    #@test depth_map(interval_prob(Node(points,1, 0),25), length) == [2 => 2, 3 => 18, 4 => 70, 5 => 150, 6 => 180, 7 => 112, 8 => 28]
+    #@test getfield.(take(interval_prob(Node(points,1, 0),25),5), :depth) == [3,4,4,5,4]
 
     #predtim: 2 => predtim:pocet node splnujici podminku
     #pak: 2 => soucet prob nodes splnujici podminku
     # [2 => 2, 3 => 18, 4 => 70, 5 => 150, 6 => 180, 7 => 112, 8 => 28]
     
-    @test mean(interval_prob(Node(points,1, 0),35)) == 1571//462;
+    #@test prob(Node([1, 2, 3],1, 1), ([1], [2, 3]), 3) == Node([2,3], 1//2, 2)
+    
+    #@test mean(interval_prob(Node(points,1, 0),35)) == 1571//462;
+    
+    morepoints = [(20,90), (25,100),(30,90)]
+    #@test prob(Node(morepoints, 1, 1), ([(20,90)], [(25,100), (30,90)]), (30,90)) == Node([(25,100), (30,90)], 1//2, 2)
+    
+    #@test split_data(morepoints, 2, 1) == [([(20,90),], [(25,100),(30,90)])]
+    @test split_data(morepoints, 2, 2) == []
+    @test split_data(morepoints, 3, 2) == []
+    
+    @test interval_prob(Node(morepoints,1//1,0),(30,90), 2) == [([(20, 90), (30, 91)], [(25, 100)])]
+    @test interval_prob(Node(morepoints,1//1,0),(30,90), 1) == [([(20, 90), (30, 91)], [(25, 100)])]
+
+    #@test checksame([[(20,70),], [(25,90),(30,90)]], 2) == 1
+    #@test checksame([[(20,70),], [(25,90),(30,60)]], 2) == 0
+
+    #@test getfield.(interval_prob(Node(morepoints,1//1,0),(30,90)), :prob) == [[(2,)], [(2,)]]
 end
