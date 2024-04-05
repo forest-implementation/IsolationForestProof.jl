@@ -3,7 +3,7 @@ use v6.e.PREVIEW;
 
 class Node {
     has $.data;
-    has  $.prob;
+    has $.prob;
     has $.depth;
     has @.split=();
     multi method COERCE (Capture $c) { Node.new: |$c }
@@ -23,7 +23,7 @@ multi prob (Node() $_, @ (@first,@second), :$point, :$dim) {
     )
 }
 
-multi interval-prob (Node() $node, :$dim, :$point, Bool :$novelty = False, :&dod where {$node.data.elems ≤ 1} = &item  ) {
+multi interval-prob (Node() $node, :$point, Bool :$novelty = False, :&dod where {$node.data.elems ≤ 1} = &item  ) {
     dod $node;
 }
 
@@ -36,7 +36,7 @@ multi split-data (+data,:$dim!) {
 
 multi interval-prob (Node() $n, :$point, :$novelty = False, :&dod = &item) {
     my $dimensions = $n.data.head.elems;
-    my $red-dims = (^$dimensions).map( -> $dim { split-data( $n.data, :$dim ) }).grep( *.elems > 0).elems;
+    my $red-dims = (^$dimensions).grep( -> $dim { $n.data»[$dim].Set > 1  }).elems;
 
     ^$dimensions
     andthen .map: -> $dim {
@@ -86,7 +86,7 @@ multi MAIN (Bool :test($)!) {
        is interval-prob(
            \( data => points, :1prob,:0depth),
            :35point
-       ).&depth-map.&expected-value.nude, (1571, 462);
+       ).&depth-map.&expected-value, 1571/462;
     }
 
    with [25,100],[30,90],[20,90] -> +point {
@@ -106,8 +106,8 @@ multi MAIN() {
     andthen (
         |(interval-prob \( data => $_, :1prob,:0depth),:point([25,100])),
     )
-   andthen .classify: *.depth , :as(*.prob)
-   andthen .nodemap: *.sum
+    andthen .classify: *.depth , :as(*.prob)
+    andthen .nodemap: *.sum
     andthen .sort
     andthen .snitch
     andthen .map: { .key *.value }\

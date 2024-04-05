@@ -1,79 +1,66 @@
 module dukaz
 using Lazy
 
-export Node, add, interval_prob, prob, interval_prob_rec, depth_map, mean, struct_eq, split_data, checksame
+export Node, interval_prob, prob, interval_prob_dims, depth_map, mean, split_data, checksame
 
-add(x,y) = x + y
 
 struct Node
-    data
+    data ::Vector{Union{Number,NTuple}}
     prob ::Rational
-    depth
+    depth::Int64
+    split::Vector
+    Node(data; prob =1//1, depth = 0, split = UnitRange[] ) = new(data,prob,depth,split)
 end
 
 
 Base.:(==)(first::Node, second::Node) = 
  return first.data == second.data && 
  first.prob == second.prob && 
- first.depth == second.depth
+ first.depth == second.depth &&
+ first.split == second.split
 
 
-prob(node::Node, tups, point, dim=1) = begin
-    if tups === nothing 
-        return nothing
-    end
-    @show tups, dim
+prob(node::Node, tups, point, dim=1) ::Node = begin
+    (node.data[1] |> length) == 3  && @show dim, node.split
     Node(
-        tups.right[1][dim] <= point[dim] ? tups.right : tups.left,
-        node.prob * (first(tups.right)[dim]-last(tups.left)[dim])/(last(tups.right)[dim]-first(tups.left)[dim]),
-        node.depth+1
+        first(tups.right)[dim] <= point[dim] ? tups.right : tups.left,
+        prob  = node.prob * (first(tups.right)[dim]-last(tups.left)[dim])/(last(tups.right)[dim]-first(tups.left)[dim]),
+        depth = node.depth+1,
+        split = [node.split...,(dim = dim, range = last(tups.left)[dim]:first(tups.right)[dim])]
     )
 end
 
-# checksame(split_data, dim) = begin
-#     prevL = map(x->x[dim],split_data[1])
-#     prevR = map(x->x[dim],split_data[2])
-#     (length(prevL) > 1 && length(prevL) != length(unique(prevL))) || (length(prevR) > 1 && length(prevR) != length(unique(prevR))) ? 1 : 0
-# end
 
 checksame(left, right, dim) = begin
-    dimL = map(x->x[dim],left)
-    dimR = map(x->x[dim],right)
-    length(findall(in(dimL),dimR)) > 0
+    last(left)[dim] == first(right)[dim]
 end
 
-split_data(data, sp, dim = 1) = 
+split_data(data, sp, dim = 1)::Union{NamedTuple{(:left, :right)},Missing} =
     @>>begin
     data
     sort(by = x -> x[dim])
-    data -> Split(data[1:sp-1], data[sp:length(data)])
-    res -> checksame(res.left, res.right, dim) ? nothing : res
-end
-
-struct Split
-    left
-    right
-end
-
-interval_prob(node, point, dim=1) = begin
-    if isnothing(node)
-        return nothing
-    end
-    length(node.data) == 1 ? [node] : @>>begin
-    range(2,length(node.data)) 
-    Iterators.map(sp-> ( split_data(node.data, sp, 1), split_data(node.data, sp, 2) ) )
-    #reduce(vcat)
-    # pokracuj tu
-    x -> (println(collect(x)); x)
-    Iterators.flatmap(tup -> (reduce(vcat,interval_prob(prob(node,first(tup), point, 1), point,1)), reduce(vcat,interval_prob(prob(node, last(tup), point, 2), point,2))))
-    collect
-    # reduce(vcat)
-end
+    data -> (left=data[1:sp-1], right =data[sp:length(data)])
+    res -> checksame(res.left, res.right, dim) ? missing : res
 end
 
 
-depth_map( nodes, f= x -> getproperty.(x,:prob) |> sum) =
-    @>>begin
+interval_prob(node::Node, point) = length(node.data) == 1 ?  [node] : @>> begin
+    1:length(node.data[1])
+    filter(dim ->  @>> node.data map( x-> x[dim] )  Set()  length x -> x > 1 )
+    x-> @>> x map(dim -> interval_prob(Node(node.data,prob = node.prob * 1//length(x), depth = node.depth, split = node.split) ,point,dim))
+    reduce(vcat, init=[])
+end
+
+interval_prob(node::Node, point, dim::Number) = @>> begin
+    2:length(node.data)
+    map(sp ->  split_data(node.data, sp, dim) )
+    skipmissing
+    map(tup -> interval_prob(prob(node,tup, point, dim), point))
+    reduce(vcat, init=[])
+end
+
+
+depth_map( nodes, f= x -> getproperty.(x,:prob) |> sum) = @>>begin
         nodes
         groupby(x-> x.depth)
         collect
@@ -90,10 +77,5 @@ mean(nodes) =
         sum
 end
 
-interval_prob_rec(nodes, point) = begin
-    length(node.data) == 1 ? node : begin
-      map(node -> interval_prob_rec(node,point), interval_prob(node, point))
-    end
-end
 
 end
