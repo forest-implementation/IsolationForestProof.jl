@@ -1,15 +1,17 @@
 module dukaz
 using Lazy
+using BigRationals
+using DataFrames
 
-export Node, interval_prob, prob, interval_prob_dims, depth_map, mean, split_data, checksame
+export Node, interval_prob, prob, depth_map, mean, split_data, checksame, copy, dimensions, uniq_size, intervals
 
 
 struct Node
     data ::Vector{Union{Number,NTuple}}
-    prob ::Rational
+    prob ::BigRational
     depth::Int64
     split::Vector
-    Node(data; prob =1//1, depth = 0, split = UnitRange[] ) = new(data,prob,depth,split)
+    Node(data; prob =BigRational(1,1), depth = 0, split = UnitRange[] ) = new(data,prob,depth,split)
 end
 
 
@@ -43,12 +45,34 @@ split_data(data, sp, dim = 1)::Union{NamedTuple{(:left, :right)},Missing} =
     res -> checksame(res.left, res.right, dim) ? missing : res
 end
 
+    Base.copy(node::Node;dims ) = @>> begin
+    Node(
+        node.data,
+        prob = node.prob * 1 // length(dims),
+        depth = node.depth,
+        split = node.split
+    )
+end
+
+dimensions(data) = 1:length(data[1])
+
+uniq_size(data, dim) = @>> begin
+    data
+    map( x-> x[dim] )
+    Set()
+    length 
+end
+
+intervals(node, point, filtered_dims) = @>> begin
+    filtered_dims
+    map(dim -> interval_prob(copy(node, dims=filtered_dims), point, dim))
+    reduce(vcat, init=[])
+end
 
 interval_prob(node::Node, point) = length(node.data) == 1 ?  [node] : @>> begin
-    1:length(node.data[1])
-    filter(dim ->  @>> node.data map( x-> x[dim] )  Set()  length x -> x > 1 )
-    x-> @>> x map(dim -> interval_prob(Node(node.data,prob = node.prob * 1//length(x), depth = node.depth, split = node.split) ,point,dim))
-    reduce(vcat, init=[])
+    dimensions(node.data)
+    filter(dim -> uniq_size(node.data, dim) > 1)
+    intervals(node, point)
 end
 
 interval_prob(node::Node, point, dim::Number) = @>> begin
@@ -62,7 +86,7 @@ end
 
 depth_map( nodes, f= x -> getproperty.(x,:prob) |> sum) = @>>begin
         nodes
-        groupby(x-> x.depth)
+        Lazy.groupby(x-> x.depth)
         collect
         map(pair -> pair.first => pair.second |> f )
         sort(by = x -> x.first)

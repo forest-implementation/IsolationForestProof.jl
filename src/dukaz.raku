@@ -101,16 +101,16 @@ multi MAIN (Bool :test($)!) {
 multi MAIN() {
     my @point := [25,100],[30,90],[20,90],[35,85], [25,85],[15,85],[105,20],[95,25], [95,15],[90,30],[90,20],[90,10];
     #my @point := 15,20,25,30,35,85,90,95,105;
-    #.say for interval-prob(\( data => (1,2,3,5), :1prob,:0depth ),4).flat;
+        #.say for interval-prob(\( data => (1,2,3,5), :1prob,:0depth ),4).flat;
     @point
     andthen (
-        |(interval-prob \( data => $_, :1prob,:0depth),:point([25,100])),
+	|(interval-prob \( data => $_, :1prob,:0depth),:point([25,20])),
     )
-    andthen .classify: *.depth , :as(*.prob)
-    andthen .nodemap: *.sum
-    andthen .sort
-    andthen .snitch
-    andthen .map: { .key *.value }\
-    andthen .sum
+    #andthen .classify: *.depth , :as(*.prob)
+    #andthen .nodemap: *.sum
+    #andthen .sort
+    #andthen .snitch
+    #andthen .map: { .key *.value }\
+    #andthen .sum
     andthen .map: *.say
 }
